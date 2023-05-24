@@ -3,6 +3,8 @@ package com.example.admobapp;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.util.Log;
@@ -17,10 +19,14 @@ import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.FullScreenContentCallback;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.OnUserEarnedRewardListener;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.google.android.gms.ads.interstitial.InterstitialAd;
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
+import com.google.android.gms.ads.rewarded.RewardItem;
+import com.google.android.gms.ads.rewarded.RewardedAd;
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -35,6 +41,10 @@ public class MainActivity extends AppCompatActivity {
     private Button retryButton;
     private boolean gameIsInProgress;
     private long timerMilliseconds;
+
+    //Rewarded Ads
+    private RewardedAd rewardedAd;
+    private final String TAG2 = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +79,70 @@ public class MainActivity extends AppCompatActivity {
         });
 
         startGame();
+
+
+
+
+
+
+
+
+        //ca-app-pub-3940256099942544/5224354917  -  this is for testing
+        //ca-app-pub-3131813705035338/8822243624  -  this is for real ads
+        //3-Configuring the Rewarded Ads
+        AdRequest adRequest3 = new AdRequest.Builder().build();
+        RewardedAd.load(this, "ca-app-pub-3940256099942544/5224354917",
+                adRequest3, new RewardedAdLoadCallback() {
+                    @Override
+                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                        // Handle the error.
+                        Log.d(TAG, loadAdError.toString());
+                        rewardedAd = null;
+                    }
+
+                    @Override
+                    public void onAdLoaded(@NonNull RewardedAd ad) {
+                        rewardedAd = ad;
+                        Log.d(TAG, "Ad was loaded.");
+                    }
+                });
+
+        //Loading Ads on button click
+        Button btn2 = findViewById(R.id.reward_btn);
+        btn2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DisplayRewardedAdsAndTakeMeToSecondActivity();
+            }
+        });
+
+    }
+
+    private void DisplayRewardedAdsAndTakeMeToSecondActivity() {
+
+        //Going to second Screen
+        Intent i = new Intent(this, SecondScreen2.class);
+        startActivity(i);
+
+        //Display Ads
+        if (rewardedAd != null) {
+            Activity activityContext = MainActivity.this;
+            rewardedAd.show(activityContext, new OnUserEarnedRewardListener() {
+                @Override
+                public void onUserEarnedReward(@NonNull RewardItem rewardItem) {
+                    // Handle the reward.
+                    int rewardAmount = rewardItem.getAmount();
+                    String rewardType = rewardItem.getType();
+
+                    Log.d("TAG", "The user earned " +rewardAmount);
+                }
+            });
+        } else {
+            Log.d(TAG, "The rewarded ad wasn't ready yet.");
+        }
+
+        //ads needs some time to load...
+        //Don`t worry it will work soon
 
     }
 
@@ -190,4 +264,5 @@ public class MainActivity extends AppCompatActivity {
         createTimer(milliseconds);
         countDownTimer.start();
     }
+
 }
